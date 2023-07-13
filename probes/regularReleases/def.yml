@@ -1,0 +1,17 @@
+# add copyright and license comment
+
+id: regularReleases
+short: Check the number of releases within the last year.
+motivation: >
+  Regular releases indicate a maturity of the project and allows the delivery of security fixes.
+implementation: >
+  
+outcome:
+  - If the project had at least one release within the year, the probe returns OutcomePositive (1)
+  - If the project did not have at least one release within the year, the probe returns OutcomeNegative (0)
+remediation:
+  effort: Low
+  text:
+    - 
+  markdown:
+    - 
