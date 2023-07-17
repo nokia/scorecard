@@ -7,6 +7,7 @@ package regularReleases
 import (
 	"embed"
 	"fmt"
+	"time"
 	"github.com/ossf/scorecard/v4/checker"
 	"github.com/ossf/scorecard/v4/finding"
 	//"github.com/ossf/scorecard/v4/probes/utils"
@@ -15,25 +16,46 @@ import (
 //go:embed *.yml
 var fs embed.FS
 
+var timeOneYearAgo = time.Now().AddDate(-1, 0, 0)
+
 const probe = "regularReleases"
 
+// Currently working but the wrong raw data is retrieved.
 func Run(raw *checker.RawResults) ([]finding.Finding, string, error) {
-	rawReviewData := &raw.CodeReviewResults
-	return CodeReviewRun(rawReviewData, fs, probe, finding.OutcomePositive, finding.OutcomeNegative)
+	rawMaintainedData := &raw.MaintainedResults
+	createdAt := rawMaintainedData.CreatedAt
+	return runReleases(createdAt)
+	//fmt.Printf("[ALL GUD IN THE HOOD]\n%v\n%v", createdAt, timeOneYearAgo)
+
 }
 
-
-/*
-** Looks through the data and validates author and reviewers of a changeset
-** Scorecard currently only supports GitHub revisions and generates a positive
-** score in the case of other platforms. This probe is created to ensure that
-** there are a number of unique reviewers for each changeset.
-*/
-
-func CodeReviewRun(reviewData *checker.CodeReviewData, fs embed.FS, probeID string,
-	positiveOutcome, negativeOutcome finding.Outcome,
-	) ([]finding.Finding, string, error) {
+func runReleases(createdAt time.Time) ([]finding.Finding, string, error) {
 	var findings []finding.Finding
-	
-	return findings, probeID, nil
+	if releasedWithinOneYear(createdAt, timeOneYearAgo) == true {
+		f, err := finding.NewPositive(fs, probe, printTime(createdAt), nil)
+		if err != nil {
+			return nil, probe, fmt.Errorf("create finding: %w", err)
+		}
+		findings = append(findings, *f)
+	} else {
+		f, err := finding.NewNegative(fs, probe, printTime(createdAt), nil)
+		if err != nil {
+			return nil, probe, fmt.Errorf("create finding: %w", err)
+		}
+		findings = append(findings, *f)
+	}
+	return findings, probe, nil
+}
+
+func printTime(createdAt time.Time) string {
+	return fmt.Sprintf("latest release: %s", createdAt.Format("Jan _2 2006 15:04:05"))
+}
+
+func releasedWithinOneYear(createdAt time.Time, timeOneYearAgo time.Time) bool {
+	// handle errors?
+	if createdAt.After(timeOneYearAgo) == true {
+		return true
+	} else {
+		return false
+	}
 }
