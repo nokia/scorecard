@@ -76,8 +76,9 @@ func releasesFrom(data []*github.RepositoryRelease) []clients.Release {
 		}
 		for _, a := range r.Assets {
 			release.Assets = append(release.Assets, clients.ReleaseAsset{
-				Name: a.GetName(),
-				URL:  a.GetURL(),
+				Name:      a.GetName(),
+				URL:       a.GetURL(),
+				CreatedAt: a.CreatedAt.Time, // added to support regularReleases probe //andrelmbackman
 			})
 		}
 		releases = append(releases, release)

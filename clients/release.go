@@ -14,6 +14,8 @@
 
 package clients
 
+import "time"
+
 // Release represents a release version of a package/repo.
 type Release struct {
 	TagName         string
@@ -24,6 +26,7 @@ type Release struct {
 
 // ReleaseAsset is part of the Release bundle.
 type ReleaseAsset struct {
-	Name string
-	URL  string
+	Name      string
+	URL       string
+	CreatedAt time.Time // added to support regularReleases probe //andrelmbackman
 }
