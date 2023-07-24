@@ -32,8 +32,7 @@ func Run(raw *checker.RawResults) ([]finding.Finding, string, error) {
 func runReleases(releases []clients.Release) ([]finding.Finding, string, error) {
 	var findings []finding.Finding
 	numReleasesWithinYear := 0
-	//fmt.Printf("\n[ASSETS]\n%v\n", releases[0].Assets)
-	if len(releases) == 0 /*|| len(releases[0].Assets) == 0*/ {
+	if len(releases) == 0 {
 		f, err := finding.NewNegative(fs, probe, fmt.Sprintf("Found no releases for the project."), nil)
 		if err != nil {
 			return nil, probe, fmt.Errorf("create finding: %w", err)
@@ -58,7 +57,10 @@ func runReleases(releases []clients.Release) ([]finding.Finding, string, error) 
 			return nil, probe, fmt.Errorf("create finding: %w", err)
 		}
 		findings = append(findings, *f)
-		timeCreated := releases[0].Assets[0].CreatedAt
+		timeCreated, err := findLatestReleaseTime(releases)
+		if err != nil {
+			return nil, probe, err
+		}
 		if releasedWithinOneYear(timeCreated, timeOneYearAgo) == true {
 		f, err := finding.NewPositive(fs, probe, printTime(timeCreated), nil)
 			if err != nil {
@@ -81,10 +83,18 @@ func printTime(timeCreated time.Time) string {
 }
 
 func releasedWithinOneYear(timeCreated time.Time, timeOneYearAgo time.Time) bool {
-	// handle time errors?
 	if timeCreated.After(timeOneYearAgo) == true {
 		return true
 	} else {
 		return false
 	}
+}
+
+func findLatestReleaseTime(releases []clients.Release) (time.Time, error) {
+	for x := range releases {
+		if len(releases[x].Assets) != 0 {
+			return releases[x].Assets[0].CreatedAt, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("could not retrieve the time of any releases")
 }
