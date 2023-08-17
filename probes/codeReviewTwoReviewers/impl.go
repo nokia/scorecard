@@ -94,7 +94,7 @@ func codeReviewRun(reviewData *checker.CodeReviewData, fs embed.FS, probeID stri
 		return findings, probeID, nil
 	case leastFoundReviewers < minimumReviewers:
 		// returns NegativeOutcome if even a single changeset was reviewed by fewer than minimumReviewers (2).
-		f, err := finding.NewWith(fs, probeID, fmt.Sprintf("some changesets had <%d reviewers",
+		f, err := finding.NewWith(fs, probeID, fmt.Sprintf("some changesets had <%d approvals",
 			minimumReviewers), nil, negativeOutcome)
 		if err != nil {
 			return nil, probeID, fmt.Errorf("create finding: %w", err)
@@ -102,7 +102,7 @@ func codeReviewRun(reviewData *checker.CodeReviewData, fs embed.FS, probeID stri
 		findings = append(findings, *f)
 	default:
 		// returns PositiveOutcome if the lowest number of unique reviewers is at least as high as minimumReviewers (2).
-		f, err := finding.NewWith(fs, probeID, fmt.Sprintf(">%d reviewers found for all changesets",
+		f, err := finding.NewWith(fs, probeID, fmt.Sprintf(">%d approvals found for all changesets",
 			minimumReviewers), nil, positiveOutcome)
 		if err != nil {
 			return nil, probeID, fmt.Errorf("create finding: %w", err)
@@ -120,7 +120,8 @@ func uniqueReviewers(changesetAuthor string, reviews []clients.Review) (int, err
 		if reviews[i].Author.Login == "" {
 			return 0, reviewerLoginErr
 		}
-		if !reviewersList[reviews[i].Author.Login] && reviews[i].Author.Login != changesetAuthor {
+		// Changed this statement to look for the "APPROVED" state, effectively looking for two unique approvers for each changeset.
+		if !reviewersList[reviews[i].Author.Login] && reviews[i].Author.Login != changesetAuthor && reviews[i].State == "APPROVED"{
 			reviewersList[reviews[i].Author.Login] = true
 		}
 	}
